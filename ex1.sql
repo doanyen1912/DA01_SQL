@@ -37,4 +37,17 @@ WHERE referee_id != 2 OR referee_id IS NULL;
 --EX11:
 SELECT name,population,area FROM WORLD 
 WHERE area >= 3000000 OR population >= 25000000;
---EX12: 
+--EX12:
+SELECT DISTINCT author_id as id 
+FROM Views
+WHERE author_id = viewer_id
+ORDER BY author_id;
+--EX13: 
+SELECT part, assembly_step FROM parts_assembly
+WHERE finish_date IS NULL;
+--EX14:
+elect * from lyft_drivers
+where yearly_salary < 30000 or yearly_salary > 70000 ;
+--EX15:
+select * from uber_advertising
+where money_spent > 10000 and year = 2019;
