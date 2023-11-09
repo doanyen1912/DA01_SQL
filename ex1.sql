@@ -19,4 +19,22 @@ FROM
 STATION
 Where CITY NOT LIKE 'A%' AND CITY NOT LIKE 'E%' AND CITY NOT LIKE 'I%' AND CITY NOT LIKE 'O%' AND CITY NOT LIKE 'U%';\
 --EX7:
-
+SELECT name
+FROM Employee
+ORDER BY name;
+--EX8:
+SELECT name
+FROM Employee
+WHERE salary > 2000 AND months < 10
+ORDER BY employee_id;
+--EX9: 
+select product_id
+from Products
+where low_fats = "Y" and recyclable = "Y";
+--EX10: 
+SELECT name FROM customer
+WHERE referee_id != 2 OR referee_id IS NULL;
+--EX11:
+SELECT name,population,area FROM WORLD 
+WHERE area >= 3000000 OR population >= 25000000;
+--EX12: 
