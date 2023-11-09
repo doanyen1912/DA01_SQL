@@ -8,11 +8,19 @@ where countrycode = 'JPN';
 select city, state from station;
 --EX4:
 select distinct city from station 
-where city like in ('%i','%e','%a','%e','%i','%u');
+where (city like "A%") 
+    or (city like "E%")
+    or (city like"I%")
+    or (city like "O%")
+    or (city like"U%");
 --EX5:
 select distinct city 
 from station 
-where city like in ('%a','%e','%i','%o','%u');
+where (city like "%A") 
+    or (city like "%I")
+    or (city like"%E")
+    or (city like "%O")
+    or (city like"%U";
 --EX6:
 Select DISTINCT CITY
 FROM
