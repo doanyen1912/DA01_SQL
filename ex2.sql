@@ -16,6 +16,13 @@ SUM(order_occurrences) AS total_orders,
 ROUND(CAST(total_items/order_occurrences as decimal),1) AS total
 FROM items_per_order; 
 em làm như này thì bị báo lỗi total_items does not exis e chưa hiểu sao lại báo lỗi thế aj */ 
+/*total_items does not exis
+tức là total_items không hề có trong bảng items_per_order 
+muồn truy vấn theo cách đó bạn phải làm như này:
+SUM(item_count * order_occurrences) AS total_items,
+SUM(order_occurrences) AS total_orders,
+ROUND(CAST(SUM(order_occurrences)/order_occurrences as decimal),1) AS total
+FROM items_per_order; */
 --EX5:
 SELECT candidate_id 
 FROM candidates
