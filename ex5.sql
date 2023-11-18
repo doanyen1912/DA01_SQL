@@ -70,4 +70,76 @@ WHERE page_id NOT IN (
 		FROM page_likes
 		)
 ORDER BY page_id ASC; 
+--Question 1 :
+select replacement_cost
+from film
+order by replacement_cost asc
+limit 1;
+-- Question 2: 
+select  /*
+(case 
+ when replacement_cost >= 9.99 and replacement_cost <= 19.99 then 'low'
+ when replacement_cost >= 20.00 and replacement_cost <= 24.99 then 'medium'
+ else 'high'
+end) as price,*/
+sum (case 
+	  when replacement_cost >= 9.99 and replacement_cost <= 19.99 
+	  then 1 else 0 
+	  end )
+from film
 
+;
+-- Question 3: 
+select a.length,c.name
+from film /*title,length*/ as a 
+left join film_category as b
+on a.film_id = b.film_id
+left join category as c 
+on b.category_id = c.category_id
+where c.name = 'Drama' or c.name='Sports'
+order by c.name asc, a.length desc
+limit 1
+;
+-- Question 4: 
+select c.name,count(c.name) as so_luong
+from film /*title,length*/ as a 
+left join film_category as b
+on a.film_id = b.film_id
+left join category as c 
+on b.category_id = c.category_id
+group by c.name 
+order by count(c.name) desc
+limit 1
+
+;
+-- Question 5: 
+select a.first_name ||' '|| a.last_name as name,
+count(film_id) as count_film
+from actor /*first last name */ as a 
+left join film_actor /*actor_id*/ as b
+on a.actor_id = b.actor_id
+group by a.actor_id
+order by count(film_id) desc
+limit 1;
+-- 2 cau nay e k ra dap an dung e chua sua dc c sua giup e voi a 
+-- Question 6: 
+select 
+count(distinct a.city_id) as so_luong
+from city as a 
+left join address as b 
+on a.city_id=b.city_id
+left join customer as c 
+on b.address_id = c.address_id
+where c.customer_id is null ;
+-- Question 7: 
+
+-- Question 8: 
+select *
+--b.city ||' '|| c.country as infor
+from address as a 
+left join city as b
+on a.city_id = b.city_id
+left join country as c
+on b.country_id = c.country_id;
+select * from payment; 
+-- 2 cau nay e chua tim dc doanh thu muc nao a 
