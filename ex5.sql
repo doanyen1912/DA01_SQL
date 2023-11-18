@@ -132,14 +132,39 @@ left join customer as c
 on b.address_id = c.address_id
 where c.customer_id is null ;
 -- Question 7: 
-
--- Question 8: 
-select *
---b.city ||' '|| c.country as infor
+select 
+b.city,
+sum(e.amount) as tong_dt
 from address as a 
 left join city as b
 on a.city_id = b.city_id
 left join country as c
-on b.country_id = c.country_id;
-select * from payment; 
--- 2 cau nay e chua tim dc doanh thu muc nao a 
+on b.country_id = c.country_id
+left join customer as d
+on a.address_id = d.address_id
+left join payment as e 
+on d.customer_id = e.customer_id
+group by b.city 
+having sum(e.amount) is not null
+order by sum(e.amount) desc
+limit 1
+;
+
+-- Question 8: 
+select 
+c.country ||' '|| b.city as infor,
+sum(e.amount) as tong_dt
+from address as a 
+left join city as b
+on a.city_id = b.city_id
+left join country as c
+on b.country_id = c.country_id
+left join customer as d
+on a.address_id = d.address_id
+left join payment as e 
+on d.customer_id = e.customer_id
+group by c.country ||' '|| b.city 
+having sum(e.amount) is not null
+order by sum(e.amount) asc/*dap an la doanh thu thap nhat*/
+limit 1
+;
