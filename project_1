@@ -1,0 +1,22 @@
+select * from sales_dataset_rfm_prj;
+ALTER TABLE sales_dataset_rfm_prj
+ALTER COLUMN ordernumber TYPE numeric USING (trim(ordernumber)::numeric);
+ALTER TABLE sales_dataset_rfm_prj
+ALTER COLUMN quantityordered TYPE int USING (trim(quantityordered)::int);
+ALTER TABLE sales_dataset_rfm_prj
+ALTER COLUMN priceeach TYPE numeric USING (trim(priceeach)::numeric);
+
+ALTER TABLE sales_dataset_rfm_prj
+ALTER COLUMN orderlinenumber TYPE int USING (trim(orderlinenumber)::int);
+
+ALTER TABLE sales_dataset_rfm_prj
+ALTER COLUMN sales TYPE numeric(18,2) USING (trim(sales)::numeric(18,2));
+
+ALTER TABLE sales_dataset_rfm_prj
+ALTER COLUMN orderdate TYPE timestamp without time zone 
+USING (trim(orderdate):: timestamp without time zone;
+	  
+alter table sales_dataset_rfm_prj 
+alter column orderdate
+type timestamp without time zone using to_timestamp(orderdate) 
+AT TIME ZONE 'UTC';	   
