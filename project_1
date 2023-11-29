@@ -14,8 +14,8 @@ ALTER TABLE sales_dataset_rfm_prj
 ALTER COLUMN sales TYPE numeric(18,2) USING (trim(sales)::numeric(18,2));
 
 ALTER TABLE sales_dataset_rfm_prj
-ALTER COLUMN orderdate TYPE timestamp with time zone 
-USING (trim(orderdate):: timestamp with time zone);
+ALTER COLUMN orderdate TYPE date 
+USING (trim(orderdate):: date);
 	  
 
 ALTER TABLE sales_dataset_rfm_prj
@@ -49,68 +49,53 @@ ALTER TABLE sales_dataset_rfm_prj
 ALTER COLUMN dealsize TYPE char(20); 
 
 2. 
-select 
-sum (case
-	 when ORDERNUMBER is null 
-	 then 1 else 0
-end) as null_ordernumber, 
-sum (case
-	 when PRICEEACH is null 
-	 then 1 else 0
-end) as null_PRICEEACH,
-sum (case
-	 when ORDERLINENUMBER is null 
-	 then 1 else 0
-end) as null_ORDERLINENUMBER,
-sum (case
-	 when SALES is null 
-	 then 1 else 0
-end) as null_SALES,
-sum (case
-	 when ORDERDATE is null 
-	 then 1 else 0
-end) as null_ORDERDATE
-from sales_dataset_rfm_prj;
--- cau nay e lam nhu the nay de dem so null o tung truong nhung ket qua lai ra 0 het ac sua giup e voi a -- 
+select orderdate
+from public.sales_dataset_rfm_prj_clean
+where orderdate is null;
+select QUANTITYORDERED
+from public.sales_dataset_rfm_prj_clean
+where QUANTITYORDERED is null;
+select PRICEEACH
+from public.sales_dataset_rfm_prj_clean
+where PRICEEACH is null;
+select ORDERLINENUMBER
+from public.sales_dataset_rfm_prj_clean
+where ORDERLINENUMBER is null;
+select SALES
+from public.sales_dataset_rfm_prj_clean
+where SALES is null;
+select ORDERDATE
+from public.sales_dataset_rfm_prj_clean
+where ORDERDATE is null;
 
 3. 
 
-select 
-initcap(left (CONTACTFULLNAME,position ('-' in CONTACTFULLNAME) -1 )) as CONTACTFIRSTNAME,
-initcap (substring (CONTACTFULLNAME 
+update public.sales_dataset_rfm_prj_clean
+set CONTACTFIRSTNAME = 
+initcap(left (CONTACTFULLNAME,position ('-' in CONTACTFULLNAME) -1 )),
+CONTACTLASTNAME = initcap (substring (CONTACTFULLNAME 
 		   from position ('-' in CONTACTFULLNAME) +1 for 
-		 10 )) as CONTACTLASTNAME
-
-
-from public.sales_dataset_rfm_prj
-insert into CONTACTFIRSTNAME 
-select ; 
-
-alter table sales_dataset_rfm_prj 
-add column CONTACTFIRSTNAME varchar (50); 
--- cau nay e thu dung insert into nhung bi bao loi e tra cx k co ham insert dc du lieu ca bang theo ham a -- 
+		 10 ))
+alter table sales_dataset_rfm_prj_clean
+add column CONTACTFIRSTNAME varchar(50);
+alter table sales_dataset_rfm_prj_clean
+add column CONTACTLASTNAME varchar(50);
 
 4.  
-select extract (month from orderdate ) as month_id,
-(case when extract (month from orderdate ) = 1 or
-  extract (month from orderdate ) = 2 or 
-  extract (month from orderdate ) =3 then '1' 
- when extract (month from orderdate ) = 4 or 
- extract (month from orderdate ) =5 or
- extract (month from orderdate ) =6 then '2'
- when extract (month from orderdate ) = 7 or
-  extract (month from orderdate ) = 8 or 
-  extract (month from orderdate ) =9 then '3' 
- when extract (month from orderdate ) = 10 or 
- extract (month from orderdate ) =11 or
- extract (month from orderdate ) =12 then '4' 
- 
-end ) as qtr_id ,
-extract (year from orderdate ) as year_id
+alter table public.sales_dataset_rfm_prj_clean 
+add column QTR_ID int;
+update sales_dataset_rfm_prj_clean
+set QTR_ID = extract (quarter from orderdate);
+alter table public.sales_dataset_rfm_prj_clean 
+add column MONTH_ID int;
+update sales_dataset_rfm_prj_clean
+set MONTH_ID = extract (month from orderdate);
+alter table public.sales_dataset_rfm_prj_clean 
+add column YEAR_ID int;
+update sales_dataset_rfm_prj_clean
+set YEAR_ID = extract (year from orderdate);
 
-from public.sales_dataset_rfm_prj 
-
-5. 
+5. --TIM OUTLIER  
 with twt_min_max as (
 select Q1 -1.5*IQR as min_value,Q3 +1.5*IQR as max_value
 from (
@@ -123,10 +108,11 @@ from public.sales_dataset_rfm_prj)), twt_outlier as (
 select * from sales_dataset_rfm_prj
 where quantityordered < (select min_value from twt_min_max ) 
 or quantityordered > (select max_value from twt_min_max )) ;
+--XU LY OUTLIER
 update sales_dataset_rfm_prj
 set quantityordered = (select avg (quantityordered)) 
 in (select quantityordered from twt_outlier ) 
 
 6.
-ALTER TABLE sales_dataset_rfm_prj   
-RENAME TO SALES_DATASET_RFM_PRJ_CLEAN;  
+create table sales_dataset_rfm_prj as (
+SELECT * FROM SALES_DATASET_RFM_PRJ_CLEAN )
