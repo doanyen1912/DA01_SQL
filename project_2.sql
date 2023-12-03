@@ -89,3 +89,49 @@ on c.id = b.product_id
 where format_date('%Y-%m-%d', b.created_at) between '2022-02-1' and '2022-04-16'
 group by 1,2
 order by 1,round(sum(b.sale_price),2) 
+
+
+--PART 2--
+with bang_1 as (select *,
+extract(month from a.created_at ) as month,
+extract(year from a.created_at) as year,
+c.category as product_category,
+round (sum(b.sale_price) over(partition by extract(year from a.created_at) ,extract(month from a.created_at )
+order by extract(year from a.created_at) ,extract(month from a.created_at )
+),2) as TPV,
+round (sum(b.order_id) over(partition by extract(year from a.created_at) ,extract(month from a.created_at )
+order by extract(year from a.created_at) ,extract(month from a.created_at )
+),2) as TPO,
+from bigquery-public-data.thelook_ecommerce.orders as a 
+join bigquery-public-data.thelook_ecommerce.order_items as b 
+on a.order_id = b.id
+join bigquery-public-data.thelook_ecommerce.products as c 
+on b.product_id = c.id )
+
+/*(doanh thu tháng sau-doanh thu tháng trước)/doanh thu tháng trước
+ (số đơn hàng tháng sau - số đơn hàng tháng trước)/số đơn tháng trước"*/
+,this_month as (
+SELECT year,month,
+SUM(TPV)  as sum_sale,
+lead(SUM(TPV)) over (order by year,month ) as next_ms,
+sum(TPO) as sum_order,
+lead(sum(TPO)) over (order by year,month ) as next_mo
+from bang_1
+group by year,month 
+order by year,month)
+
+,growth as (select *,
+concat((round(((sum_sale - next_ms )/sum_sale),2)),'%') as Revenue_growth ,
+concat((round(((sum_order - next_mo )/sum_order),2)),'%') as Order_growth 
+
+from this_month)
+ 
+, total as (select  year,month ,
+sum(cost) as Total_cost ,
+sum(retail_price) - sum(cost)  as Total_profit,
+round(sum(retail_price) - sum(cost) / sum(cost),2 ) as Profit_to_cost_ratio
+from bang_1 
+group by year,month 
+order by year,month )
+
+
