@@ -92,46 +92,101 @@ order by 1,round(sum(b.sale_price),2)
 
 
 --PART 2--
-with bang_1 as (select *,
-extract(month from a.created_at ) as month,
-extract(year from a.created_at) as year,
+--create view vw_vw_ecommerce_analyst as (
+with vw_vw_ecommerce_analyst as (
+with bang_1 as (
+select 
+format_date('%Y-%m', a.created_at) as year_month,
 c.category as product_category,
-round (sum(b.sale_price) over(partition by extract(year from a.created_at) ,extract(month from a.created_at )
-order by extract(year from a.created_at) ,extract(month from a.created_at )
-),2) as TPV,
-round (sum(b.order_id) over(partition by extract(year from a.created_at) ,extract(month from a.created_at )
-order by extract(year from a.created_at) ,extract(month from a.created_at )
-),2) as TPO,
+round (sum(b.sale_price),2) as TPV,
+round (sum(b.order_id),2) as TPO,
+sum(cost) as Total_cost,
+sum(retail_price) - sum(cost)  as Total_profit,
+round(sum(retail_price) - sum(cost) / sum(cost),2 ) as Profit_to_cost_ratio
 from bigquery-public-data.thelook_ecommerce.orders as a 
 join bigquery-public-data.thelook_ecommerce.order_items as b 
 on a.order_id = b.id
 join bigquery-public-data.thelook_ecommerce.products as c 
-on b.product_id = c.id )
+on b.product_id = c.id 
+group by a.created_at ,c.category, format_date('%Y-%m', a.created_at)
+order by format_date('%Y-%m', a.created_at) 
+)
 
 /*(doanh thu tháng sau-doanh thu tháng trước)/doanh thu tháng trước
  (số đơn hàng tháng sau - số đơn hàng tháng trước)/số đơn tháng trước"*/
 ,this_month as (
-SELECT year,month,
+SELECT year_month,
 SUM(TPV)  as sum_sale,
-lead(SUM(TPV)) over (order by year,month ) as next_ms,
+lead(SUM(TPV)) over (order by year_month ) as next_ms,
 sum(TPO) as sum_order,
-lead(sum(TPO)) over (order by year,month ) as next_mo
+lead(sum(TPO)) over (order by year_month ) as next_mo
 from bang_1
-group by year,month 
-order by year,month)
+group by year_month 
+order by year_month)
 
 ,growth as (select *,
 concat((round(((sum_sale - next_ms )/sum_sale),2)),'%') as Revenue_growth ,
 concat((round(((sum_order - next_mo )/sum_order),2)),'%') as Order_growth 
-
-from this_month)
+from this_month
  
-, total as (select  year,month ,
-sum(cost) as Total_cost ,
-sum(retail_price) - sum(cost)  as Total_profit,
-round(sum(retail_price) - sum(cost) / sum(cost),2 ) as Profit_to_cost_ratio
-from bang_1 
-group by year,month 
-order by year,month )
+ )
+select *
+from bang_1 as d 
+join growth as e  
+on d.year_month = e.year_month
+)
 
-
+--cohort chart--
+with cte as (
+  select 
+  format_date('%Y-%m', first) as cohort_date,date,
+  ((extract year from date ) - (extrac year from first)) *12 
+  +  ((extract month from date ) - (extrac month from first)) + 1 as index 
+  from (
+    select user_id,created_at as date,
+    min(created_at) over(partition by user_id) as first 
+    from bigquery-public-data.thelook_ecommerce.order_items 
+    where created_at between '2019-01-01' and '2019-05-01'
+  )
+   
+),
+cte1 as (
+  select cohort_date,index,count(distinct user_id ) as count_user
+  from cte 
+  group by cohort_date,index
+),
+cohort as (
+  select cohort_date,
+  sum (case when index =1 then count_user else 0 end) as m1,
+  sum (case when index =2 then count_user else 0 end) as m2,
+  sum (case when index =3 then count_user else 0 end) as m3,
+  sum (case when index =4 then count_user else 0 end) as m4
+  from cte1 
+  group by cohort_date
+  order by cohort_date
+)
+select cohort_date,
+round(100.00*m1/m1,2)||'%' as m1,
+round(100.00*m2/m1,2)||'%' as m2,
+round(100.00*m3/m1,2)||'%' as m3,
+round(100.00*m4/m1,2)||'%' as m4
+from cohort
+-- visualize--
+with cte as (
+  select user_id,
+  format_date('%Y-%m', first) as cohort_date,date,
+  ((extract year from date ) - (extrac year from first)) *12 
+  +  ((extract month from date ) - (extrac month from first)) + 
+  1 as index 
+  from (
+    select user_id,created_at as date,
+    min(created_at) over(partition by user_id) as first 
+    from bigquery-public-data.thelook_ecommerce.order_items 
+    where created_at between '2019-01-01' and '2019-05-01'
+  )
+   
+)
+select cohort_date,index,count(distinct user_id) as count_user
+from cte 
+group by cohort_date, index
+order by cohort_date, index
