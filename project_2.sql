@@ -140,8 +140,8 @@ on d.year_month = e.year_month
 with cte as (
   select 
   format_date('%Y-%m', first) as cohort_date,date,
-  ((extract year from date ) - (extrac year from first)) *12 
-  +  ((extract month from date ) - (extrac month from first)) + 1 as index 
+  ((extract year from date ) - (extract year from first)) *12 
+  +  ((extract month from date ) - (extract month from first)) + 1 as index 
   from (
     select user_id,created_at as date,
     min(created_at) over(partition by user_id) as first 
@@ -155,7 +155,7 @@ cte1 as (
   from cte 
   group by cohort_date,index
 ),
-cohort as (
+/*cohort as (
   select cohort_date,
   sum (case when index =1 then count_user else 0 end) as m1,
   sum (case when index =2 then count_user else 0 end) as m2,
@@ -164,7 +164,7 @@ cohort as (
   from cte1 
   group by cohort_date
   order by cohort_date
-)
+)*/
 select cohort_date,
 round(100.00*m1/m1,2)||'%' as m1,
 round(100.00*m2/m1,2)||'%' as m2,
