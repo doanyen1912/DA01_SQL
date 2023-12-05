@@ -28,3 +28,13 @@ sum(sales) over (partition by productline )
 from public.sales_dataset_rfm_prj_clean_2 
 where month_id = 11
 order by sum(sales) over (partition by productline ) desc 
+
+/*Đâu là sản phẩm có doanh thu tốt nhất ở UK mỗi năm? */ 
+with cte as (select distinct year_id,month_id, productline, 
+sum(sales) over (partition by productline) as sum_sale
+from public.sales_dataset_rfm_prj_clean_2
+where  STATE = 'NY'
+order by  year_id, sum(sales) over (partition by productline) desc ) 
+select *,
+dense_rank() over (partition by productline order by sum_sale) as rank_sale
+from cte
