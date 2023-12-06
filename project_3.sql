@@ -30,11 +30,14 @@ where month_id = 11
 order by sum(sales) over (partition by productline ) desc 
 
 /*Đâu là sản phẩm có doanh thu tốt nhất ở UK mỗi năm? */ 
-with cte as (select distinct year_id,month_id, productline, 
-sum(sales) over (partition by productline) as sum_sale
+with cte as (select distinct year_id,month_id, productline,state, 
+sum(sales) over (partition by productline) as sum_sale,
+row_number() over(partition by year_id ) as rank_sale
 from public.sales_dataset_rfm_prj_clean_2
-where  STATE = 'NY'
 order by  year_id, sum(sales) over (partition by productline) desc ) 
-select *,
-dense_rank() over (partition by productline order by sum_sale) as rank_sale
-from cte
+
+select * from cte
+where state <> 'Tokyo' and state <> 'Osaka' and
+rank_sale = 1
+--câu này e tính ra sp có doanh thu cao nhất e thấy có tokyo vs osaka là k p uk nên e lọc 2 nc này ạ --  
+
